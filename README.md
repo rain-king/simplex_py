@@ -5,6 +5,7 @@ Two-phase Simplex implementation in Python with numpy
 1. Identify unbounded solutions.
 2. Identify when there is no feasible solution.
 3. Edge cases with only equalities.
+4. Print the original problem without slack and artificial variable columns.
 
 ## Usage
 Needs numpy installed.
