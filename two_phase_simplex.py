@@ -6,31 +6,32 @@ def main():
 	maximize, c, A, b, A_eq = lp_input()
 
 	# CREATE PRE-TABLEU
-	Ab = np.hstack((A, b))
+	B = np.identity(b.shape[0])
+	AB = np.hstack((A,B))
+	ABb = np.hstack((AB, b))
 #	W = np.zeros(c.shape[0])
-	A_columns_without_artificials = A.shape[1]
+	AB_columns_without_ineq_artificials = AB.shape[1]
 
 	print("The original problem is:")
-	print(np.insert(Ab, 0, np.hstack((c,np.zeros(1))), axis=0))
+	print(np.insert(ABb, 0, np.hstack((c,np.zeros(ABb.shape[1]-c.shape[0]))), axis=0))
 	print()
 	
 	# CREATE ARTIFICIAL VARIABLES FOR >= INEQUALITIES
 	mask = b < 0
 	unmasked = np.sum(mask)
-	artificials = np.empty((0, b.shape[0]))
+	artificials = np.empty((b.shape[0], 0))
 	for i, value in enumerate(mask):
 		if value:
-			arr = np.zeros((1, b.shape[0]))
+			arr = np.zeros((b.shape[0],1))
 			if i < b.shape[0]:
-				arr[0, i] = -1
-			artificials = np.vstack((artificials, arr))
+				arr[i] = -1
+			artificials = np.hstack((artificials, arr))
 
 	if artificials.size != 0:
 		# TO DO: CHANGE W_basis_rows name
-		# TO DO: DO NOT TRANSPOSE
 		# ADD ARTIFICIAL VARIABLES
-		AA = np.hstack((A, np.transpose(artificials)))
-		AAb = np.hstack((AA,b))
+		ABA = np.hstack((AB, artificials))
+		ABAb = np.hstack((ABA,b))
 
 		W_basis_rows = list()
 		for i in range(A_eq.shape[0]):
@@ -39,16 +40,13 @@ def main():
 			if value:
 				# i+1 constraint row index (after Z row)
 				W_basis_rows.append(i+1)
-				AAb[i] = -AAb[i]
+				ABAb[i] = -ABAb[i]
 
-#		print(AAb)
-#		print(W_basis)
-
-		W = np.hstack((np.zeros(A_columns_without_artificials-1), np.full(A_eq.shape[0]+artificials.shape[0], -1)))
+		W = np.hstack((np.zeros(AB_columns_without_ineq_artificials-1), np.full(A_eq.shape[0]+artificials.shape[1], -1)))
 		W = np.hstack((W, np.zeros(1)))
-#		print(AAb)
+#		print(ABAb)
 #		print(W)
-		table = np.insert(AAb, 0, W, axis=0)
+		table = np.insert(ABAb, 0, W, axis=0)
 
 		print("The uninitialized phase 1 tableu is:")
 		print(table)
@@ -62,15 +60,17 @@ def main():
 		print(table)
 		print()
 
+		# PHASE 1 SOLUTION
 		basis = simplex(table, maximize, iterations=200)
 
 		# PREPARING PHASE 2 TABLEU
-		# delete non basic variables
+		# delete non basic column variables
 		to_delete = list()
 		for j, value in enumerate(table[0]):
-			if j not in [element[1] for element in basis] and j in range(A.shape[1]-A_eq.shape[1], A.shape[1] + artificials.shape[0]):
+			if j not in [element[1] for element in basis] and j in range(AB.shape[1]-A_eq.shape[1], AB.shape[1] + artificials.shape[1]):
 				to_delete.append(j)
 		table = np.delete(table, to_delete, axis=1)
+		print(table)
 
 		table[0] = np.hstack((c,np.zeros(table.shape[1] - c.shape[0])))
 		print("The uninitialized phase 2 tableu is:")
@@ -83,11 +83,11 @@ def main():
 	
 		print("The phase 2 tableu is:")
 	else:
-		Ab = np.hstack((A, b))
+		ABb = np.hstack((A, b))
 		Z = np.hstack((c, np.zeros(1)))
-		print(Ab)
+		print(ABb)
 		print(Z)
-		table = np.insert(Ab, 0, Z, axis=0)
+		table = np.insert(ABb, 0, Z, axis=0)
 		print("The tableu is:")
 
 	if maximize:
@@ -289,12 +289,12 @@ def lp_input():
 
 	if A_eq.size != 0:
 		A = np.vstack((A, A_eq))
-		A = np.hstack((A, np.identity(len(A))))
+#		A = np.hstack((A, np.identity(len(A))))
 		b = np.vstack((b, b_eq))
-		c = np.hstack((c, np.zeros(A.shape[1] - c.shape[0])))
-	else:
-		A = np.hstack((A, np.identity(len(A))))
-		c = np.hstack((c, np.zeros(A.shape[1] - c.shape[0])))
+#		c = np.hstack((c, np.zeros(A.shape[1] - c.shape[0])))
+#	else:
+#		A = np.hstack((A, np.identity(len(A))))
+#		c = np.hstack((c, np.zeros(A.shape[1] - c.shape[0])))
 
 	return maximize, c, A, b, A_eq
 
