@@ -45,11 +45,5 @@ x_1 = 0
 x_2 = 0
 x_3 = 0.19999999999999996
 x_4 = 0.5999999999999999
-x_5 = 0
-x_6 = 3.0000000000000018
-x_7 = 30.0
-x_8 = 40.00000000000001
-x_9 = 0
 With an optimal Z value of 12.999999999999996
 ```
-where `x_5` to `x_9` are slack and artificial variables.
